@@ -1,3 +1,4 @@
 flake.lock
 build/
 .cache
+compile_commands.json
