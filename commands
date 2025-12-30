@@ -1,0 +1,4 @@
+#clean up log file
+sed -r 's/\x1B(\[[0-9;]*[mKHFhJsu]|][^\a]*\a)//g' typescript > clean_log.txt
+
+script -t -q ~/.local/state/term-logger/DD-MM-YYYY/SessionIndex-HH 

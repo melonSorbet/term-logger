@@ -1,11 +1,16 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.mkShell.override { stdenv = pkgs.clang19Stdenv; } {
   buildInputs = [
-    pkgs.gcc        # compiler + std
+    pkgs.gcc # compiler + std
     pkgs.cmake
     pkgs.gdb
     pkgs.cli11
+    pkgs.television
+    pkgs.bat
+    pkgs.fd
   ];
   shellHook = ''
     rm -rf build compile_commands.json
