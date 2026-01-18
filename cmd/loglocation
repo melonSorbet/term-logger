@@ -1,0 +1,7 @@
+Script started on 2026-01-06 00:15:13+01:00 [TERM="tmux-256color" TTY="/dev/pts/13" COLUMNS="98" LINES="46"]
+bash: /home/user/.bashrc: line 41: syntax error near unexpected token `('
+bash: /home/user/.bashrc: line 41: `trap 'sed -r 's/\x1B(\[[0-9;]*[mKHFhJsu]|][^\a]*\a)//g' typescript > $log_location''
+]3008;start=b4d19f03-e8c8-4fa1-80f2-dc15020c866b;user=user;hostname=fedora;machineid=fcd9b595f44b478283576959690d1db2;bootid=64943a02-435a-46fc-96d3-6c31563a22d6;pid=30871;type=shell;cwd=/home/user/Work/projects/term-logger\[?2004h[0m[32muser@fedora[0m:[32m~/Work/projects/term-logger[0m$ exit
+[?2004l]3008;start=f735d31a-c9e6-47cd-9bd0-dd381b3fa645;user=user;hostname=fedora;machineid=fcd9b595f44b478283576959690d1db2;bootid=64943a02-435a-46fc-96d3-6c31563a22d6;pid=30871;type=command;cwd=/home/user/Work/projects/term-logger\exit
+
+Script done on 2026-01-06 00:15:19+01:00 [COMMAND_EXIT_CODE="2"]
