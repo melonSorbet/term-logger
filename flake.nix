@@ -1,46 +1,42 @@
 {
-  description = "Terminal Logger";
+  description = "Terminal Logger - devShell with LLVM, CLI11, FTXUI, fixed headers";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-        llvm = pkgs.llvmPackages_latest;
-        lib = nixpkgs.lib;
-      in
-      {
-        devShell = pkgs.mkShell {
-          nativeBuildInputs = [
-            pkgs.cmake
-            llvm.lldb
-            pkgs.clang-tools
-            llvm.clang
-            pkgs.cli11
-            pkgs.ftxui
-          ];
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      # This is the list of architectures that work with this project
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          system,
+          ...
+        }:
+        {
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [
+              cmake
+              cli11
+              ftxui
+              rapidfuzz-cpp
+              ninja
+            ];
 
-          buildInputs = [
-            llvm.libcxx
-          ];
+            CMAKE_PREFIX_PATH = "${pkgs.cli11}";
 
-          CPATH = builtins.concatStringsSep ":" [
-            (lib.makeSearchPathOutput "dev" "include" [ llvm.libcxx ])
-            (lib.makeSearchPath "resource-root/include" [ llvm.clang ])
-          ];
-          CMAKE_PREFIX_PATH = "${pkgs.cli11}";
+          };
         };
-      }
-    );
+    };
 }

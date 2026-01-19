@@ -1,35 +1,40 @@
 cmake_minimum_required(VERSION 3.16)
 project(app LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Compile commands for cmake + nix + nvim
+
+#compile commands for cmake + nix + nvim
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+endif()
 
-# Source files
-add_executable(app src/main.cpp)
+add_executable(app
+    src/main.cpp
+    src/fuzzy.cpp
+)
+target_include_directories(app
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+)
 
-# Dependencies
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_BINARY_DIR}/compile_commands.json
+        ${CMAKE_SOURCE_DIR}/compile_commands.json
+)
 find_package(CLI11 CONFIG REQUIRED)
 find_package(FTXUI REQUIRED)
+target_link_libraries(app PRIVATE CLI11::CLI11)
 
-# Link libraries
-target_link_libraries(app 
-    PRIVATE 
+target_link_libraries(app
+    PRIVATE
         CLI11::CLI11
         ftxui::screen
         ftxui::dom
         ftxui::component
 )
 
-# Optional: symlink compile_commands.json to source dir
-if(CMAKE_EXPORT_COMPILE_COMMANDS)
-    add_custom_target(
-        copy_compile_commands ALL
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            ${CMAKE_BINARY_DIR}/compile_commands.json
-            ${CMAKE_SOURCE_DIR}/compile_commands.json
-        DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
-    )
-endif()
