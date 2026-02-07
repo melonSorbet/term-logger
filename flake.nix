@@ -30,8 +30,9 @@
               cmake
               cli11
               ftxui
-              rapidfuzz-cpp
+              ripgrep
               ninja
+              boost
             ];
 
             CMAKE_PREFIX_PATH = "${pkgs.cli11}";
