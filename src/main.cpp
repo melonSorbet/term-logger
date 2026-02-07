@@ -14,19 +14,13 @@
 // then when you want to look through the logs
 // either you open the files per .local/state/term-logger
 // or you say term-logger find which opens a screen like
-#include <CLI/App.hpp>
-#include <CLI/CLI.hpp>
-#include <filesystem>
-#include <print>
-#include <fuzzy.hpp>
-#include <vector>
+#include <ripgrep.hpp>
+
 using namespace std;
 
-
 // fuzzy finder
-int main() {
 
-  vector<string> paths = get_all_files("/home/user/Downloads/");
-  println("{}", paths);
-
+int main(int argc, char *argv[]) {
+  std::string str(argv[1]);
+  run_ripgrep(str);
 }
