@@ -3,40 +3,38 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
+    inputs@{ flake-parts, nixpkgs, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      # This is the list of architectures that work with this project
+      # Platforms we support
       systems = [
         "x86_64-linux"
         "aarch64-linux"
-        "aarch64-darwin"
         "x86_64-darwin"
+        "aarch64-darwin"
       ];
+
+      # Shells and configs per system
       perSystem =
-        {
-          config,
-          self',
-          inputs',
-          pkgs,
-          system,
-          ...
-        }:
+        { pkgs, ... }:
         {
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
               cmake
               cli11
               ftxui
-              ripgrep
-              ninja
               boost
+              ninja
+              ripgrep
             ];
 
-            CMAKE_PREFIX_PATH = "${pkgs.cli11}";
-
+            # Make CMake aware of CLI11, FTXUI, Boost
+            shellHook = ''
+              export CMAKE_PREFIX_PATH=${pkgs.cli11}:${pkgs.ftxui}:${pkgs.boost}
+            '';
           };
         };
     };

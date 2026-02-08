@@ -14,6 +14,8 @@
 // then when you want to look through the logs
 // either you open the files per .local/state/term-logger
 // or you say term-logger find which opens a screen like
+#include <boost/json/src.hpp>
+#include <print>
 #include <ripgrep.hpp>
 
 using namespace std;
@@ -22,5 +24,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   std::string str(argv[1]);
-  run_ripgrep(str);
+  boost::json::value ripgrep_result_json = run_ripgrep(str);
+
+  std::println("{}", boost::json::serialize(ripgrep_result_json));
+
 }
