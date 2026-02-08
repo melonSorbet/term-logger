@@ -43,4 +43,24 @@ target_link_libraries(app
         ftxui::dom
         ftxui::component
 )
+target_precompile_headers(app PRIVATE
+    # Boost headers (the heavy ones)
+    <boost/json.hpp>
+    #<boost/json/src.hpp>
+    <boost/process.hpp>
 
+    # Standard library
+    <filesystem>
+    <format>
+    <string>
+    <vector>
+    <iostream>
+    <sstream>
+    <memory>
+    <algorithm>
+
+    # C headers if you use them
+    <fcntl.h>
+    <sys/wait.h>
+    <unistd.h>
+)
