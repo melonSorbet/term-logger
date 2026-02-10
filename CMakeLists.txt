@@ -21,6 +21,7 @@ find_package(FTXUI REQUIRED)
 add_executable(app
     src/main.cpp
     src/ripgrep.cpp
+    src/tui.cpp
 )
 
 # add header files
