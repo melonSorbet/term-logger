@@ -1,15 +1,15 @@
-#include <boost/json.hpp>
+#include <boost/json/parse.hpp>
+#include <fcntl.h>
 #include <filesystem>
 #include <format>
-#include <string>
-
 #include <ripgrep.hpp>
-#include <boost/process.hpp>
-#include <fcntl.h>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
+
 void get_text_preview() {}
 vector<string> get_all_files(filesystem::path path) {
   auto iterator = std::filesystem::recursive_directory_iterator(path);
@@ -22,20 +22,33 @@ vector<string> get_all_files(filesystem::path path) {
   }
   return files;
 }
+class RipGrepMatch {
+  std::string path;
+  int line;
+  int start_line;
+  int end_line;
 
-// run ripgrep and build data structure for easy data access
-// run the command then build it on teh json return
-boost::json::value run_ripgrep(std::string pattern) {
+  std::vector<RipGrepMatch> jsonToStruct() {}
+};
+
+std::vector<boost::json::value> run_ripgrep(std::string pattern) {
+  if (pattern.empty()) {
+    return {};
+  }
   boost::process::ipstream output;
   std::string command = std::format("rg -i {} --json", pattern);
   boost::process::child child_process(command,
                                       boost::process::std_out > output);
-  std::string output_string((std::istreambuf_iterator<char>(output)),
-                            std::istreambuf_iterator<char>());
 
-  child_process.wait(); // Wait for the child to finish
+  std::string line;
+  std::vector<boost::json::value> results;
 
-  // println("{}", output_string);
+  while (std::getline(output, line)) {
+    if (!line.empty()) {
+      results.push_back(boost::json::parse(line));
+    }
+  }
+  child_process.wait();
 
-  return boost::json::parse(output_string);
+  return results;
 }

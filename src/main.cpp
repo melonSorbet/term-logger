@@ -15,17 +15,25 @@
 // either you open the files per .local/state/term-logger
 // or you say term-logger find which opens a screen like
 #include <boost/json/src.hpp>
+#include <cstdlib>
 #include <print>
 #include <ripgrep.hpp>
-
-using namespace std;
-
-// fuzzy finder
+#include <string>
+#include <tui.hpp>
+#include <unistd.h>
+#include <vector>
 
 int main(int argc, char *argv[]) {
+
+  if (argc <= 1) {
+    return EXIT_FAILURE;
+  }
   std::string str(argv[1]);
-  boost::json::value ripgrep_result_json = run_ripgrep(str);
+  std::vector<boost::json::value> ripgrep_result_json = run_ripgrep(str);
+  for (boost::json::value json : ripgrep_result_json) {
+    std::println("{}", boost::json::serialize(ripgrep_result_json));
+  }
 
-  std::println("{}", boost::json::serialize(ripgrep_result_json));
-
+  setupTUI();
+  return EXIT_SUCCESS;
 }
