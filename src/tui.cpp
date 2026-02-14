@@ -1,4 +1,4 @@
-
+#include <fstream>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/screen_interactive.hpp>
@@ -7,8 +7,9 @@
 #include <ftxui/screen/color.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/terminal.hpp>
-
 #include <ripgrep.hpp>
+#include <string>
+#include <vector>
 
 using namespace ftxui;
 
@@ -16,16 +17,25 @@ int setupTUI() {
 
   auto screen = ScreenInteractive::Fullscreen();
 
-  std::vector<std::string> entries = {"cool"};
+  std::vector<std::string> entries = {};
   std::string pattern_input;
   InputOption input_option = InputOption();
   std::string hint = "";
+  std::vector<RipGrepMatch> current_matches = {};
 
-  input_option.on_change = [&entries, &screen, &pattern_input] {
+  input_option.on_change = [&entries, &screen, &pattern_input,
+                            &current_matches] {
     screen.Post([&] {
       // get entries and push them all in preferably in a stack
+      auto results = jsonToStruct(run_ripgrep(pattern_input));
+      entries = {};
+      for (auto result : results) {
+        entries.push_back(result.path);
+      }
+      current_matches = results;
     });
   };
+
   input_option.transform = [](InputState state) {
     state.element |= borderEmpty;
 
@@ -50,7 +60,20 @@ int setupTUI() {
 
   MenuOption option;
 
-  option.on_enter = screen.ExitLoopClosure();
+  std::vector<std::string> lines = {};
+  option.on_enter = [&lines, &current_matches, &selected] {
+    lines = {};
+
+    std::fstream file(current_matches[selected].path);
+    if (!file) {
+      return;
+    }
+    std::string string = "";
+    while (std::getline(file, string)) {
+      lines.push_back(string);
+    }
+  };
+
   auto menu = Menu(&entries, &selected, option);
 
   auto left = Container::Vertical(
@@ -58,14 +81,6 @@ int setupTUI() {
        input_path | frame |
            size(ftxui::WIDTH, ftxui::EQUAL, (Terminal::Size().dimx / 2)) |
            size(ftxui::HEIGHT, EQUAL, 1) | border});
-
-  std::vector<std::string> lines = {
-      "⚙ user@fedora  ~/Work/projects/term-logger  ↱ main ±  ❄ "
-      " "
-      "./build/app poop",
-      "Line 2: More content",
-      "Line 3: Keep adding lines...",
-  };
 
   int scroll_position = 0;
 
@@ -89,4 +104,5 @@ int setupTUI() {
   auto window_container = Container::Horizontal({left | flex, window_1 | flex});
 
   screen.Loop(window_container);
+  return 1;
 }
