@@ -59,6 +59,7 @@ jsonToStruct(std::vector<boost::json::value> matches) {
         rgm.end = submatch.at("end").as_int64();
         rgm.path = path;
         rgm.line_text = line_text;
+        rgm.line_number = line_number;
 
         result.push_back(std::move(rgm));
       }

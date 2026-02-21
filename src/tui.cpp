@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cstdlib>
+#include <format>
 #include <fstream>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -9,9 +11,11 @@
 #include <ftxui/screen/color.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/terminal.hpp>
+#include <print>
 #include <ripgrep.hpp>
 #include <string>
 #include <vector>
+
 void load_file(std::vector<std::string> &lines,
                std::vector<RipGrepMatch> current_matches, int selected) {
   lines = {};
@@ -35,7 +39,6 @@ int setupTUI() {
   std::string pattern_input;
   std::string hint = "";
   std::vector<RipGrepMatch> current_matches = {};
-  int scroll_position = 0;
 
   std::vector<std::string> lines = {};
 
@@ -85,7 +88,7 @@ int setupTUI() {
   // add event for h for help
 
   auto menu = Menu(&entries, &selected, option);
-  float scroll_y = 0.1;
+  float scroll_y = 0.1f;
   SliderOption<float> option_y;
   option_y.value = &scroll_y;
   option_y.min = 0.f;
@@ -102,8 +105,27 @@ int setupTUI() {
 
   auto content = ftxui::Renderer([&] {
     std::vector<ftxui::Element> elements;
+    int count = 0;
     for (const auto &line : lines) {
-      elements.push_back(ftxui::text(line));
+      if (count == current_matches[selected].line_number - 1) {
+        int start = std::min((int)line.size(), current_matches[selected].start);
+        int end = std::min((int)line.size(), current_matches[selected].end);
+
+        std::string first_half = line.substr(0, start);
+        std::string keyword = line.substr(start, end - start);
+        std::string second_half = line.substr(end);
+        std::println("{}", keyword);
+        elements.push_back(
+            ftxui::hbox({ftxui::text(first_half),
+                         ftxui::underlined(ftxui::text(keyword)) |
+                             ftxui::color(ftxui::Color::Red),
+                         ftxui::text(second_half)}));
+      } else {
+
+        elements.push_back(ftxui::text(line));
+      }
+
+      count++;
     }
 
     return ftxui::vbox(elements) | ftxui::focusPositionRelative(0, scroll_y) |
@@ -174,36 +196,79 @@ int setupTUI() {
             size(ftxui::HEIGHT, EQUAL, 1) | border,
     });
   });
-  auto window_container =
-      CatchEvent(Container::Horizontal({left_renderer | flex, window_1 | flex}),
-                 [&](Event event) {
-                   if (event == Event::Escape ||
-                       event.is_character() && event.character() == "q") {
-                     screen.ExitLoopClosure();
-                     return true;
-                   }
+  bool editor_opened = false; // declare outside the CatchEvent lambda
+  auto exit_loop = screen.ExitLoopClosure();
+  auto window_container = CatchEvent(
+      Container::Horizontal({left_renderer | flex, window_1 | flex}),
+      [&](Event event) {
+        if (event == Event::Escape ||
+            event.is_character() && event.character() == "q") {
+          screen.ExitLoopClosure();
+          return true;
+        }
 
-                   if (event == Event::ArrowUp) {
-                     // move up in the list
-                     selected = std::max(0, selected - 1);
-                     option.on_change();
-                     load_file(lines, current_matches, selected);
-                     return true;
-                   }
+        if (event == Event::ArrowUp) {
+          if (current_matches.empty()) {
+            return true;
+          }
+          // move up in the list
+          selected = std::max(0, selected - 1);
+          option.on_change();
+          scroll_y = static_cast<float>(current_matches[selected].line_number) /
+                     std::max(1, (int)lines.size() - 1);
+          load_file(lines, current_matches, selected);
 
-                   if (event == Event::ArrowDown) {
-                     // move down in the list
-                     selected = std::min((int)entries.size() - 1, selected + 1);
-                     option.on_change();
-                     screen.PostEvent(Event::Custom);
-                     load_file(lines, current_matches, selected);
-                     return true;
-                   }
-                   if (event == Event::Return) {
-                   }
+          return true;
+        }
 
-                   return false;
-                 });
+        if (event == Event::ArrowDown) {
+          // move down in the list
+          if (current_matches.empty()) {
+            return true;
+          }
+          selected = std::min((int)entries.size() - 1, selected + 1);
+          option.on_change();
+          screen.PostEvent(Event::Custom);
+          // scrolled position
+          scroll_y = static_cast<float>(current_matches[selected].line_number) /
+                     std::max(1, (int)lines.size() - 1);
+
+          load_file(lines, current_matches, selected);
+          return true;
+        }
+
+        // if (event == Event::Return && !editor_opened) {
+        //   if (current_matches.empty()) {
+        //     return true;
+        //   }
+        //   editor_opened = true;
+
+        //   std::string editor =
+        //       std::getenv("EDITOR") ? std::getenv("EDITOR") : "vi";
+        //   std::string file = current_matches[selected].path;
+        //   int line = std::max(0, current_matches[selected].line_number - 1);
+
+        //   std::thread([&, editor, file, line]() {
+        //     pid_t pid = fork();
+        //     if (pid == 0) {
+        //       execlp(editor.c_str(), editor.c_str(),
+        //              std::format("+{}", line).c_str(), file.c_str(),
+        //              nullptr);
+        //       std::perror("execlp failed");
+        //       std::exit(1);
+        //     } else if (pid > 0) {
+        //       int status;
+        //       waitpid(pid, &status, 0); // wait for editor
+        //       load_file(lines, current_matches, selected);
+        //     } else {
+        //       std::perror("fork failed");
+        //     }
+        //     editor_opened = false;
+        //   }).detach();
+        //   }
+
+        return false;
+      });
 
   input_path->TakeFocus();
   screen.Loop(window_container);
